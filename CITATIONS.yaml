@@ -50,6 +50,10 @@ components:
     algorithm: [prokofev1998, Prokofev1998JETP]
     implementation: [alps30]
     uses: [scheduler]
+  pimc_worm:
+    name: ALPS path integral Monte Carlo with worm-type updates
+    algorithm: [prokofev1998, Prokofev1998JETP]
+    implementation: [sadoune2022]
   qwl:
     name: ALPS quantum Wang-Landau
     algorithm: [wang2001prl, wang2001pre, troyer2003qwl]

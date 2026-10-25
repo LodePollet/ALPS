@@ -28,6 +28,7 @@ The framework paper applies to every component. A paper serving several roles is
 | `looper` | [evertz1993](#evertz1993), [beard1996](#beard1996), [evertz2003](#evertz2003) | [todo2001](#todo2001) | — |
 | `dirloop_sse` | [sandvik1999](#sandvik1999), [syljuasen2002](#syljuasen2002) | [alet2005directed](#alet2005directed) | scheduler |
 | `worm` | [prokofev1998](#prokofev1998), [Prokofev1998JETP](#prokofev1998jetp) | [alps30](#alps30) | scheduler |
+| `pimc_worm` | [prokofev1998](#prokofev1998), [Prokofev1998JETP](#prokofev1998jetp) | [sadoune2022](#sadoune2022) | — |
 | `qwl` | [wang2001prl](#wang2001prl), [wang2001pre](#wang2001pre), [troyer2003qwl](#troyer2003qwl) | [alps30](#alps30) | scheduler |
 | `dmrg` | [white1992](#white1992), [white1993](#white1993), [schollwock2005](#schollwock2005), [hallberg2006](#hallberg2006) | [feiguin2013](#feiguin2013) | scheduler |
 | `dmft` | [metzner1989](#metzner1989), [georges1992](#georges1992), [georges1996](#georges1996) | [gull2011cpc](#gull2011cpc) | — |
@@ -94,6 +95,10 @@ N. V. Prokof'ev, B. V. Svistunov, I. S. Tupitsyn, "``Worm'' Algorithm in Quantum
 ### Prokofev1998JETP
 
 N. V. Prokof'ev, B. V. Svistunov, I. S. Tupitsyn, "Exact, complete, and universal continuous-time worldline Monte Carlo approach to the statistics of discrete quantum systems." Journal of Experimental and Theoretical Physics 87, 310–321 (1998). https://doi.org/10.1134/1.558661
+
+### sadoune2022
+
+N. Sadoune, L. Pollet, "Efficient and scalable path integral Monte Carlo simulations with worm-type updates for Bose-Hubbard and XXZ models." SciPost Physics Codebases, 9 (2022). https://doi.org/10.21468/SciPostPhysCodeb.9
 
 ### wang2001prl
 

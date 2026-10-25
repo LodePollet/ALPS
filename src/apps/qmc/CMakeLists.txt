@@ -19,6 +19,7 @@
 
 add_subdirectory(checksign)
 add_subdirectory(looper)
+add_subdirectory(pimc_worm)
 add_subdirectory(qwl)
 add_subdirectory(sse4)
 add_subdirectory(worms)

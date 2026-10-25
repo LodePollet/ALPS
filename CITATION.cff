@@ -297,6 +297,22 @@ references:
     value: Prokofev1998JETP
     description: ALPS reference key
 - type: article
+  title: Efficient and scalable path integral Monte Carlo simulations with worm-type updates for
+    Bose-Hubbard and XXZ models
+  authors:
+  - family-names: Sadoune
+    given-names: N.
+  - family-names: Pollet
+    given-names: L.
+  year: 2022
+  journal: SciPost Physics Codebases
+  doi: 10.21468/SciPostPhysCodeb.9
+  start: '9'
+  identifiers:
+  - type: other
+    value: sadoune2022
+    description: ALPS reference key
+- type: article
   title: Efficient, Multiple-Range Random Walk Algorithm to Calculate the Density of States
   authors:
   - family-names: Wang
