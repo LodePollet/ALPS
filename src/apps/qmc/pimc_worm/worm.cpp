@@ -114,6 +114,9 @@ worm::worm(parameters_type const & parameters, std::size_t seed_offset) : alps::
   initialize_update_prob();
 
   {
+#ifdef PIMC_WORM_ALPS_LATTICE
+  MyLatt = unique_ptr<LATTICE>(new LATTICE(parameters));
+#else
   size_t Lx = parameters["Lx"].as<size_t>();
   size_t Ly = parameters["Ly"].as<size_t>();
   size_t Lz = parameters["Lz"].as<size_t>();
@@ -121,13 +124,14 @@ worm::worm(parameters_type const & parameters, std::size_t seed_offset) : alps::
   bool pbcy = parameters["pbcy"].as<bool>();
   bool pbcz = parameters["pbcz"].as<bool>();
   MyLatt = unique_ptr<LATTICE>(new LATTICE(Lx, Ly, Lz, pbcx, pbcy, pbcz));
+#endif
 #ifdef DEBUGMODE
   MyLatt->print();
 #endif
   }
 
-  winding_element = MyLatt->directions();
   Nsites = MyLatt->get_Nsites();
+  winding_element.resize(Nsites);
   zc.resize(Nsites);
   nb.resize(boost::extents[Nsites][zcmax]);
   bond_index.resize(boost::extents[Nsites][zcmax]);
@@ -140,6 +144,11 @@ worm::worm(parameters_type const & parameters, std::size_t seed_offset) : alps::
         nb[s][d] = MyLatt->nb(s,d);
         opposite_direction[s][d] = MyLatt->get_opposite_direction(s, nb[s][d]);
         bond_index[s][d] = MyLatt->get_bond_index(s,d);
+#ifdef PIMC_WORM_ALPS_LATTICE
+        winding_element[s][d] = MyLatt->winding_vector(s,d);
+#else
+        winding_element[s][d] = MyLatt->directions()[d];
+#endif
       }
       else { //-1 means non existent
         nb[s][d] = -1;
@@ -410,8 +419,8 @@ void worm::measure() {
   if(counter[counter_tag::MEASURE] >= Nmeasure) {
     counter[counter_tag::MEASURE] = 0;
     double Ek = nrvertex/beta * (-1.);
-    vector<double> wsq(latt_dim, 0);
-    for (size_t i=0; i < latt_dim; i++) {
+    vector<double> wsq(MyLatt->get_dim(), 0);
+    for (size_t i=0; i < wsq.size(); i++) {
       wsq[i] = mWinding[i] * mWinding[i] / (MyLatt->get_Ls(i) * MyLatt->get_Ls(i) * 1.);
     }
     measurements["Kinetic_Energy"] << Ek;
@@ -551,13 +560,26 @@ static void fft2d(std::vector<std::complex<double>>& data, size_t Lx, size_t Ly)
 } // anonymous namespace
 #endif
 
+// Translation-invariant estimators need a single-site unit cell and
+// periodic boundaries in the first maxdim directions.
+bool worm::periodic_bravais(size_t maxdim) const {
+#ifdef PIMC_WORM_ALPS_LATTICE
+  if (MyLatt->get_nbasis() > 1) return false;
+  for (size_t d = 0; d < std::min(MyLatt->get_dim(), maxdim); ++d)
+    if (!MyLatt->is_periodic(d)) return false;
+#else
+  static const char* const pbc[] = {"pbcx", "pbcy", "pbcz"};
+  if (LATTICE::n_basis > 1) return false;
+  for (size_t d = 0; d < std::min(LATTICE::dim, maxdim); ++d)
+    if (!parameters[pbc[d]].as<bool>()) return false;
+#endif
+  return true;
+}
+
 void worm::measure_corrfun() {
 #ifdef UNISYS
   //Corrfun is only measured for periodic boundary conditions
-  if (LATTICE::n_basis > 1) return;
-  if (!parameters["pbcx"]) return;
-  if (LATTICE::dim > 1 && !parameters["pbcy"]) return;
-  if (LATTICE::dim > 2 && !parameters["pbcz"]) return;
+  if (!periodic_bravais(3)) return;
   vector<double> hist_dd(hist_densmat.size(), 0.);
   vector<double> dens_distr(Nsites);
   for (auto i=0; i < Nsites; i++) {
@@ -585,7 +607,7 @@ void worm::measure_corrfun() {
   // G(k, omega_n) Matsubara measurement
   if (Nfreq > 0) {
     const size_t Lx = MyLatt->get_Ls(0);
-    const size_t Ly = (LATTICE::dim > 1 ? MyLatt->get_Ls(1) : 1);
+    const size_t Ly = (MyLatt->get_dim() > 1 ? MyLatt->get_Ls(1) : 1);
     const double norm = hist_dm_fac / Nmeasure2;
     vector<double> gk_re((size_t)Nsites * Nfreq);
     vector<double> gk_im((size_t)Nsites * Nfreq);
@@ -624,10 +646,7 @@ void worm::measure_corrfun() {
 
 void worm::measure_density_matrix() {
 #ifdef UNISYS
-  if (LATTICE::n_basis > 1) return;
-  if (!parameters["pbcx"]) return;
-  if (LATTICE::dim > 1 && !parameters["pbcy"]) return;
-  if (LATTICE::dim > 2 && !parameters["pbcz"]) return;
+  if (!periodic_bravais(3)) return;
   size_t dd = MyLatt->relNumbering(worm_head_it->link(), worm_tail_it->link());
   if (dd) {
     hist_densmat[dd] += 1. / (C_worm);
@@ -656,9 +675,7 @@ void worm::measure_density_matrix() {
 void worm::measure_Gktau() {
 #ifdef UNISYS
   if (Nfreq == 0) return;
-  if (LATTICE::n_basis > 1) return;
-  if (!parameters["pbcx"]) return;
-  if (LATTICE::dim > 1 && !parameters["pbcy"]) return;
+  if (!periodic_bravais(2)) return;
   // r = r_tail - r_head, consistent with measure_density_matrix convention
   size_t r = (size_t)MyLatt->relNumbering(worm_head_it->link(), worm_tail_it->link());
   const double inv_Cworm = 1.0 / C_worm;
@@ -681,9 +698,7 @@ void worm::measure_Gktau() {
 void worm::measure_G0tau() {
 #ifdef UNISYS
   if (Ntau_bins == 0) return;
-  if (LATTICE::n_basis > 1) return;
-  if (!parameters["pbcx"]) return;
-  if (LATTICE::dim > 1 && !parameters["pbcy"]) return;
+  if (!periodic_bravais(2)) return;
   // Direct G(k=0,tau) estimator: sum over all r with equal weight (no
   // phase factor, since k=0), no special-casing -- deliberately the
   // simplest possible analog of measure_Gktau's per-step accumulation,

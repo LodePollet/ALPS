@@ -106,7 +106,7 @@ void worm::save(alps::hdf5::archive & ar) const {
     ar["checkpoint/configuration/hist_grtau_im"] << hist_grtau_im;
     // k-point and frequency metadata (deterministic, but stored for convenience)
     const size_t Lx = MyLatt->get_Ls(0);
-    const size_t Ly = (LATTICE::dim > 1 ? MyLatt->get_Ls(1) : 1);
+    const size_t Ly = (MyLatt->get_dim() > 1 ? MyLatt->get_Ls(1) : 1);
     vector<double> kpoints(2 * (size_t)Nsites);
     for (size_t r = 0; r < (size_t)Nsites; r++) {
       kpoints[2*r]   = 2.0 * M_PI * (r % Lx) / Lx;

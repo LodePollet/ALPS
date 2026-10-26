@@ -440,3 +440,6 @@ struct triangular : lattice<2,1> {
     };
 };
 
+#ifdef PIMC_WORM_ALPS_LATTICE
+#include "alps_lattice.hpp"
+#endif

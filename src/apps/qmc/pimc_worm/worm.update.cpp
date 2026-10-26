@@ -631,9 +631,7 @@ int worm::INSERTKINK() {
     nrvertex++;
     worm_passes_nb_kink = 0;
     worm_meas_densmat = false;
-    if (MyLatt->relNumbering(isite, adj_site)) {
-        mWinding += winding_element[nbs]  *  (n_down - n_up);
-    }
+    mWinding += winding_element[isite][nbs]  *  (n_down - n_up);
     return accepted;
   }
   else {
@@ -735,9 +733,7 @@ int worm::DELETEKINK() {
     worm_at_stop = 0;
     worm_passes_nb_kink = 0;
     worm_meas_densmat = false;
-    if (MyLatt->relNumbering(isite, adj_site)) {
-        mWinding += winding_element[linkdir] * (n_B_link - n_A_link);
-    }
+    mWinding += winding_element[isite][linkdir] * (n_B_link - n_A_link);
     return accepted;
   }
   else { // Metropolis rejection

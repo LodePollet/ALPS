@@ -40,9 +40,31 @@ diagram element, so it is a compile-time choice: one executable is built per
 lattice, `pimc_worm_<lattice>`, and `pimc_worm_<lattice>_mpi` as well when
 `ALPS_ENABLE_MPI=ON`.
 
+`pimc_worm_alps` takes its lattice from the ALPS lattice library instead
+(`alps_lattice.hpp`): any lattice whose sites have at most `PIMC_WORM_ZCMAX`
+neighbors, selected with `LATTICE`, `L` and, where the lattice has them, `W`
+and `H` in place of `Lx`, `Ly`, `Lz` and `pbcx`, `pbcy`, `pbcz`:
+
+```ini
+LATTICE = "triangular lattice"
+L = 3
+W = 3
+```
+
+The lattice library is found as in other ALPS programs, or through
+`LATTICE_LIBRARY`; in a build tree, set `ALPS_XML_PATH` to
+`src/alps/resources`. Sites are numbered as in the ALPS lattice, with the last
+dimension running fastest, so per-site output is ordered differently from
+`pimc_worm_<lattice>`; the correlation functions are indexed as before. ALPS's
+`honeycomb lattice` has the primitive vectors `a1` and `a2` where worm's
+`honeycomb` has `a2` and `a2 - a1`, so the two winding-number components
+differ, while their lattices agree on an `L x L` torus. See
+[docs/alps_lattice_design.md](docs/alps_lattice_design.md).
+
 | CMake option | Default | Effect |
 |---|---|---|
-| `PIMC_WORM_LATTICES` | all | Lattices to build: `chain`, `square`, `cubic`, `ladder`, `triangular`, `honeycomb` |
+| `PIMC_WORM_LATTICES` | all | Lattices to build: `chain`, `square`, `cubic`, `ladder`, `triangular`, `honeycomb`, `alps` |
+| `PIMC_WORM_ZCMAX` | `6` | `pimc_worm_alps`: largest number of neighbors of a site |
 | `PIMC_WORM_DSTRUC` | `LIST` | Diagram data structure: `AVL`, `LIST` or `LIST_STACK` |
 | `PIMC_WORM_UNIFORM` | `ON` | Uniform parameters; `OFF` for site- and bond-dependent ones |
 | `PIMC_WORM_CWINDOW` | `OFF` | Canonical window for the Green's function |
@@ -62,6 +84,15 @@ configuration. Results are written to `job.out.h5`.
 
 ## Tests
 
+`test/lattice_test.cpp` checks that `alps_lattice` reproduces each of the
+hand-written lattices: the same bonds, the same winding increment of every
+hop, neighbor tables that agree from both ends of a bond, and the same
+relative numbering. It is registered with CTest when `ALPS_BUILD_TESTING=ON`:
+
+```sh
+ctest -R pimc_worm
+```
+
 Each directory in `test/` compares a short run with exact diagonalization:
 
 ```sh
@@ -73,6 +104,8 @@ cd .. && python compare.py chain
 
 ## Not yet integrated
 
-The code uses its own lattices (`lattice.hpp`) and models (`model.hpp`)
-rather than the ALPS lattice and model libraries. Moving to those, and
-registering the tests with CTest, are left for later.
+The models stay in `model.hpp`. `pimc_worm_alps` is the first step towards
+ALPS lattices; the remaining steps (one executable for all lattices,
+correlation functions on ALPS distance classes, couplings by site and bond
+type) are described in [docs/alps_lattice_design.md](docs/alps_lattice_design.md).
+The exact-diagonalization comparisons are not yet registered with CTest.

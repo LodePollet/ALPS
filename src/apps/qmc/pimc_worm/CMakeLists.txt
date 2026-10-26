@@ -7,8 +7,12 @@
 
 # The lattice sets the maximum coordination number that sizes every diagram
 # element, so it is chosen at compile time: one executable per lattice.
-set(PIMC_WORM_LATTICES chain square cubic ladder triangular honeycomb
+# "alps" builds pimc_worm_alps, which reads any lattice of the ALPS lattice
+# library whose coordination number is at most PIMC_WORM_ZCMAX.
+set(PIMC_WORM_LATTICES chain square cubic ladder triangular honeycomb alps
   CACHE STRING "Lattices for which pimc_worm executables are built")
+set(PIMC_WORM_ZCMAX 6 CACHE STRING
+  "pimc_worm_alps: maximum coordination number of the lattice")
 set(PIMC_WORM_DSTRUC LIST CACHE STRING
   "pimc_worm diagram data structure: AVL, LIST or LIST_STACK")
 set_property(CACHE PIMC_WORM_DSTRUC PROPERTY STRINGS AVL LIST LIST_STACK)
@@ -43,12 +47,17 @@ endif()
 
 set(_pimc_worm_targets "")
 foreach(lattice IN LISTS PIMC_WORM_LATTICES)
-  if(NOT lattice MATCHES "^(chain|square|cubic|ladder|triangular|honeycomb)$")
+  if(NOT lattice MATCHES "^(chain|square|cubic|ladder|triangular|honeycomb|alps)$")
     message(FATAL_ERROR "Unknown pimc_worm lattice ${lattice}")
   endif()
   set(impl pimc_worm_${lattice}_impl)
   add_library(${impl} STATIC worm.cpp worm.update.cpp worm.output.cpp)
-  target_compile_definitions(${impl} PUBLIC LATTICE=${lattice} ${_pimc_worm_definitions})
+  if(lattice STREQUAL "alps")
+    target_compile_definitions(${impl} PUBLIC LATTICE=alps_lattice PIMC_WORM_ALPS_LATTICE
+      PIMC_WORM_ZCMAX=${PIMC_WORM_ZCMAX} ${_pimc_worm_definitions})
+  else()
+    target_compile_definitions(${impl} PUBLIC LATTICE=${lattice} ${_pimc_worm_definitions})
+  endif()
   target_link_libraries(${impl} PUBLIC ALPS::alps Eigen3::Eigen)
 
   add_executable(pimc_worm_${lattice} worm.run.cpp)
@@ -62,3 +71,10 @@ foreach(lattice IN LISTS PIMC_WORM_LATTICES)
   endif()
 endforeach()
 alps_install_applications(${_pimc_worm_targets})
+
+# Compares the hand-written lattices with their ALPS lattice library counterparts.
+if(ALPS_BUILD_TESTING)
+  add_executable(pimc_worm_lattice_test test/lattice_test.cpp)
+  target_link_libraries(pimc_worm_lattice_test PRIVATE ALPS::alps Eigen3::Eigen)
+  alps_add_gtest(pimc_worm_lattice_test COMPONENT pimc_worm)
+endif()

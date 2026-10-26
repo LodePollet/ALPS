@@ -88,7 +88,6 @@ public :
     using BondType = LATTICE::Base::BondType;
     using BondIndex = LATTICE::Base::BondIndex;
     static const size_t zcmax = LATTICE::zcmax;
-    static const size_t latt_dim = LATTICE::Base::dim;
   
   worm(parameters_type const & parms, std::size_t seed_offset = 0);
     
@@ -281,7 +280,8 @@ private:
   vector<double> time_green;
 
   LATTICE::Direction mWinding;
-  std::array<LATTICE::Direction, LATTICE::zcmax> winding_element;
+  std::vector<std::array<LATTICE::Direction, LATTICE::zcmax>> winding_element; // [site][direction]
+  bool periodic_bravais(size_t maxdim) const;
   
   DMatrix update_statistics;
   vector<double> nbtime;
