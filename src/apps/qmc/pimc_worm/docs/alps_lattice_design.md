@@ -89,8 +89,17 @@ is adopted later:
   give the same integers for closed loops, and `measure()` is only called in
   the diagonal sector (`update()` loops until `worm_diag`), so results agree.
   Checkpoints written with the old gauge must not be resumed.
-- Open directions have no wrapping bonds, so their winding is zero. A plain
-  `GRAPH` without a lattice has no bond vectors: switch the estimator off there.
+- Winding numbers and the superfluid stiffness need periodic boundaries along
+  the Bravais vectors, not translation invariance: hopping and potential terms
+  may break it (disorder, superlattices, traps) and the estimator stays valid.
+  Gate it on the periodic directions only, never on homogeneity or `UNISYS`.
+- Open directions have no wrapping bonds, so their winding is zero; measure
+  only the periodic components and normalize the stiffness by their number.
+- A plain `GRAPH` without a lattice has no bond vectors: omit winding and
+  stiffness there, measure everything else, and say so in one start-up line
+  that names the reason ("no periodic lattice directions", not "no
+  translation symmetry"). Today `alps_lattice` assumes cells and would fail
+  on a `GRAPH`; this must become a clean path with a test.
 - The winding estimator is currently compiled only with `UNISYS`, but it does
   not need uniform couplings; it can be measured always.
 
@@ -140,9 +149,11 @@ Proposal:
   type, but no values. Random on-site potentials need a value source: a
   per-site/per-bond file (HDF5 or text) named by a parameter, replacing the
   hard-coded `user_set_params()` block. Tables per site are `Nsites * (nmax+1)`.
-- **Measurements gated at run time:** translation-invariant estimators are
-  switched off when the lattice is inhomogeneous or site/bond values come from
-  a file; winding, energies and densities stay on.
+- **Measurements gated at run time:** estimators indexed by translation
+  (`relNumbering`, `G(k, omega_n)`) are switched off when the lattice is
+  inhomogeneous or site/bond values come from a file; energies and densities
+  stay on, and winding and stiffness stay on whenever the lattice has periodic
+  directions (section 2.3).
 - **Sign check:** the weights are used as probabilities. `XXZ` returns
   `0.5 * Jpm * ...` and Bose-Hubbard `t * ...` unchanged, so a negative
   off-diagonal coupling silently produces negative weights. On ALPS lattices
@@ -189,6 +200,29 @@ Proposal:
   variants of chain and square.
 - `ZC` is a CMake option for `pimc_worm_alps` (`PIMC_WORM_ZCMAX`, default 6);
   a lattice with more neighbors is refused at start-up.
+
+## 5b. Succeeding `worms`
+
+The older worm code in `src/apps/qmc/worms` has no maintainer: its author has
+left the collaboration, and only `pimc_worm` is to be maintained. The plan,
+stated in the discussion of ALPSim/ALPS#254 (winding numbers on `GRAPH`
+lattices, issue #43), is to deprecate `worms` once `pimc_worm` takes its
+inputs, accepting small fixes to `worms` until then. `pimc_worm` can in
+principle simulate every model `worms` reasonably can; what it must provide
+before the switch:
+
+- Any ALPS lattice, including a plain `GRAPH`, with the winding behaviour of
+  section 2.3 (and the start-up note), tested.
+- Couplings by bond and site type with the ALPS names (`t#`, `V#`, `U`, `mu`,
+  ...), where an unset type falls back to the untyped value rather than to
+  zero. ALPS's `boson Hubbard` defaults unset `t#` to zero, which on
+  `honeycomb lattice` (three bond types) silently gives `t1 = t2 = 0`.
+- Inhomogeneous and disordered couplings (section 3).
+- The measurements `worms` reports (energies, densities, correlations,
+  Green's function, winding and stiffness), with names mapped in the docs.
+- ED benchmarks at a temperature that matches the reference: the honeycomb
+  2x2 reference is a ground-state value and needs `beta >= 60` (at
+  `beta = 20` both codes sit 3-5 sigma off in the same direction, N = 7.016).
 
 ## 6. Suggested order
 
