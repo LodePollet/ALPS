@@ -13,6 +13,8 @@
 
 #include <alps/params/convenience_params.hpp>
 
+#include <numeric>
+
 std::string worm::code_name() {
     return "Simulation of the Bose-Hubbard or the XXZ model with the worm algorithm";
 }
@@ -187,11 +189,15 @@ worm::worm(parameters_type const & parameters, std::size_t seed_offset) : alps::
     << alps::accumulators::LogBinningAccumulator<double >("Number_of_particles")
     << alps::accumulators::LogBinningAccumulator<double >("Number_of_particles_squared")
     << alps::accumulators::LogBinningAccumulator<vector<double> >("Density_Distribution")
+    // The names ALPS's older worm code (worms) uses, for pyalps scripts
+    << alps::accumulators::LogBinningAccumulator<double >("Energy")
+    << alps::accumulators::LogBinningAccumulator<double >("Density")
 #ifdef UNISYS
     << alps::accumulators::LogBinningAccumulator<vector<double> >("Density_Matrix")
     //<< alps::accumulators::LogBinningAccumulator<vector<double> >("Density_Matrix2")
     << alps::accumulators::LogBinningAccumulator<vector<double> >("DensDens_CorrFun")
     << alps::accumulators::LogBinningAccumulator<vector<double> >("Winding_number_squared")
+    << alps::accumulators::LogBinningAccumulator<double >("Stiffness")
 #ifdef MATSUBARA_MEAS
     << alps::accumulators::LogBinningAccumulator<vector<double> >("Greenfun_k_omega_re")
     << alps::accumulators::LogBinningAccumulator<vector<double> >("Greenfun_k_omega_im")
@@ -428,8 +434,17 @@ void worm::measure() {
     measurements["Total_Energy"] << Epot_measure + Ek;
     measurements["Number_of_particles"] << number_of_particles * 1.;
     measurements["Number_of_particles_squared"] << number_of_particles * number_of_particles * 1.;
+    measurements["Energy"] << Epot_measure + Ek;
+    measurements["Density"] << number_of_particles * 1. / Nsites;
 #ifdef UNISYS
     measurements["Winding_number_squared"] << wsq;
+    // sum_d <W_d^2> / (d beta) over the d periodic directions (open ones
+    // have no windings): the superfluid stiffness in 2D, to be multiplied by
+    // L^(2-d) otherwise. worms divides by the lattice dimension instead.
+    size_t n_periodic = 0;
+    for (size_t d = 0; d < wsq.size(); ++d) n_periodic += MyLatt->is_periodic(d);
+    if (n_periodic > 0)
+      measurements["Stiffness"] << std::accumulate(wsq.begin(), wsq.end(), 0.) / (n_periodic * beta);
 #endif
   }
     
@@ -468,11 +483,14 @@ void worm::force_reset_statistics() {
     reset(measurements["Number_of_particles"]);
     reset(measurements["Number_of_particles_squared"]);
     reset(measurements["Density_Distribution"]);
+    reset(measurements["Energy"]);
+    reset(measurements["Density"]);
 #ifdef UNISYS
     reset(measurements["Density_Matrix"]);
     //reset(measurements["Density_Matrix2"]);
     reset(measurements["DensDens_CorrFun"]);
     reset(measurements["Winding_number_squared"]);
+    reset(measurements["Stiffness"]);
 #ifdef MATSUBARA_MEAS
     reset(measurements["Greenfun_k_omega_re"]);
     reset(measurements["Greenfun_k_omega_im"]);

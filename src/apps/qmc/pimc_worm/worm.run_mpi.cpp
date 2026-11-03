@@ -11,6 +11,7 @@
 
 #include "worm.hpp"
 #include "copyright.hpp"
+#include "alps_input.hpp"
 #include <iostream>
 #include <stdexcept>
 #include <algorithm>
@@ -37,8 +38,14 @@ int main(int argc, char** argv) {
             std::cout << "# Initializing parameters..." << std::endl;
         }
 
-        // Parse parameters - all ranks get same parameters
-        alps::parameters_type<alps::mcmpiadapter<worm>>::type parameters(argc, argv, comm);
+        // Parse parameters - all ranks get same parameters, also from a
+        // pyalps input file and with ALPS parameter names (alps_input.hpp)
+        pimc_worm_input::command_line cl(argc, argv, true);
+        alps::parameters_type<alps::mcmpiadapter<worm>>::type parameters(cl.argc(), cl.argv(), comm);
+        pimc_worm_input::supply_input_file(parameters, cl.input_file());
+        if (!parameters.is_restored()) {
+            pimc_worm_input::supply_alps_names<LATTICE>(parameters);
+        }
         alps::mcmpiadapter<worm>::define_parameters(parameters);
 
         // Check help on all ranks, exit cleanly

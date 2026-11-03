@@ -2,7 +2,7 @@
 *
 * ALPS Project Applications
 *
-* Copyright (C) 2021-2026 by Jonas Greitemann, Nicolas Sadoune and Lode Pollet
+* Copyright (C) 2026 by Lode Pollet
 *
 * ALPS Project: https://alps.comp-phys.org/
 * SPDX-License-Identifier: MIT

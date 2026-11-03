@@ -20,7 +20,9 @@ exact-diagonalization references and `compare.py`) without their build scripts.
 
 The upstream repository is licensed under the GPL-3.0. Its copyright holders,
 Jonas Greitemann, Nicolas Sadoune and Lode Pollet, relicense the code here
-under the MIT License of ALPS. Changes made for ALPS:
+under the MIT License of ALPS. Files added in ALPS in 2026 (`alps_lattice.hpp`,
+`alps_input.hpp`, `test/lattice_test.cpp`, `test/input_test.cpp`) are by Lode
+Pollet alone. Changes made for ALPS:
 
 - MIT/SPDX file headers, and an MIT notice in the start-up banner
   (`copyright.hpp`), which prints the `pimc_worm` entry of the ALPS citation
@@ -82,12 +84,71 @@ A run resumes from its checkpoint with `pimc_worm_chain job.clone.h5`;
 `--reset-statistics` discards the measurements while keeping the restored
 configuration. Results are written to `job.out.h5`.
 
+### From pyalps, and with ALPS parameter names
+
+`pimc_worm` also takes its input the way ALPS's other programs do
+(`alps_input.hpp`), so the same runs can be driven from pyalps:
+
+```python
+files = pyalps.writeInputH5Files('parm', [{'LATTICE': 'square lattice', 'L': 4,
+    'MODEL': 'boson Hubbard', 'T': 0.1, 't': 0.05, 'U': 1.0, 'mu': 0.5, 'Nmax': 2,
+    'SWEEPS': 500000, 'runtimelimit': 600}])
+pyalps.runApplication('pimc_worm_square', files)
+data = pyalps.loadMeasurements(pyalps.getResultFiles(prefix='parm'), 'Stiffness')
+```
+
+- An HDF5 file whose `/parameters` group has no ALPSCore attributes, as
+  `pyalps.writeInputH5Files` writes it, is an input file, not a checkpoint.
+  `parm.taskN.in.h5` writes `parm.taskN.out.h5` and checkpoints to
+  `parm.taskN.clone.h5`; values on the command line take precedence.
+- The arguments `runApplication` adds are understood: `-T n` is
+  `runtimelimit`, `--Tmin`/`--TMax` go to the MPI driver's schedule, and
+  `--write-xml` is ignored. With `MPI=n`, run `pimc_worm_<lattice>_mpi`; the
+  serial programs refuse `--mpi` rather than run n copies writing the same
+  files. XML input (`writeInputFiles`) is not read.
+- The ALPS names are accepted in input files, `.ini` files and on the command
+  line alike; giving both an ALPS name and the `pimc_worm` name it stands for
+  is an error.
+
+| ALPS | `pimc_worm` |
+|---|---|
+| `MODEL = "boson Hubbard"` | `model = "BoseHubbard"` |
+| `T` | `beta` = 1/`T` |
+| `t`, or `t0`, `t1`, ... if all equal | `t_hop` |
+| `V`, or `V0`, `V1`, ... if all equal | `V_nn` |
+| `U`, `Nmax`, `mu` | `U_on`, `nmax`, `mu` |
+| `SWEEPS`, `THERMALIZATION`, `SEED` | `sweeps`, `thermalization`, `seed` |
+| `LATTICE`, `L`, `W`, `H` | `Lx`, `Ly`, `Lz` of `pimc_worm_<lattice>`, whose `LATTICE` must match (`"square lattice"` for `pimc_worm_square`); `pimc_worm_alps` reads them itself |
+
+XXZ runs keep `pimc_worm`'s names (`model = "XXZ"`, `Jpm`, `Jzz`, `h`). A
+`pimc_worm` sweep is one worm cycle, not a sweep over the lattice, and a run
+also ends after `runtimelimit` seconds (default 60).
+
+Besides its own observables, `pimc_worm` measures three under the names of
+ALPS's older `worm`: `Energy` (= `Total_Energy`), `Density`
+(= `Number_of_particles` / number of sites) and `Stiffness`
+= Σ_d ⟨W_d²⟩ / (d β), with `W_d` the winding numbers and `d` the number of
+periodic directions. `Stiffness` is the superfluid stiffness in two
+dimensions; multiply it by L^(2-d) otherwise. Like `Winding_number_squared` it
+is measured with `PIMC_WORM_UNIFORM=ON`. It equals `worm`'s on fully periodic
+lattices; with open directions `worm` divides by the lattice dimension
+instead. `pimc_worm_honeycomb` takes the winding numbers along worm's
+primitive vectors, which differ from ALPS's, so its `Stiffness` differs from
+`worm`'s and from `pimc_worm_alps`'s on `honeycomb lattice`. A checkpoint written before these
+observables were added still resumes; they then hold only the measurements
+made after the resume.
+
+[tutorials/mc-10-pimc-worm](../../../../tutorials/mc-10-pimc-worm) computes
+the stiffness of the Bose-Hubbard model both ways.
+
 ## Tests
 
 `test/lattice_test.cpp` checks that `alps_lattice` reproduces each of the
 hand-written lattices: the same bonds, the same winding increment of every
 hop, neighbor tables that agree from both ends of a bond, and the same
-relative numbering. It is registered with CTest when `ALPS_BUILD_TESTING=ON`:
+relative numbering. `test/input_test.cpp` checks the pyalps input and the
+ALPS parameter names. Both are registered with CTest when
+`ALPS_BUILD_TESTING=ON`:
 
 ```sh
 ctest -R pimc_worm

@@ -75,6 +75,15 @@ struct lattice {
       else { return Lz; }
     };
 
+    // The boundary condition the lattice was built with (the ladder forces
+    // an open y direction whatever pbcy says), as alps_lattice::is_periodic
+    bool is_periodic(size_t d) const {
+      if (d == 0) return pbcx;
+      if (d == 1) return pbcy;
+      if (d == 2) return pbcz;
+      throw std::runtime_error("call to is_periodic() with invalid argument");
+    }
+
     SiteType operator[](SiteIndex s) const {return s;}
     SiteType get_site(SiteIndex s) const {return s;}
 
@@ -234,6 +243,7 @@ private:
 
 
 struct cubic : lattice<3,1> {
+    static constexpr const char* alps_name = "simple cubic lattice";  // LATTICE in the ALPS lattice library
     using Base = lattice;
     static const size_t zcmax = 6;
 
@@ -276,6 +286,7 @@ struct cubic : lattice<3,1> {
 
 
 struct square : lattice<2,1> {
+    static constexpr const char* alps_name = "square lattice";  // LATTICE in the ALPS lattice library
     using Base = lattice;
     static const size_t zcmax = 4;
 
@@ -313,6 +324,7 @@ struct square : lattice<2,1> {
 
 
 struct chain : lattice<1,1> {
+    static constexpr const char* alps_name = "chain lattice";  // LATTICE in the ALPS lattice library
     using Base = lattice;
     static const size_t zcmax = 2;
 
@@ -346,6 +358,7 @@ struct chain : lattice<1,1> {
 
 //treated as special case of square with Ly=2 and pbcy=false
 struct ladder : square {
+    static constexpr const char* alps_name = "ladder";  // LATTICE in the ALPS lattice library
 
     ladder(size_t Lx, [[maybe_unused]] size_t Ly, [[maybe_unused]] size_t Lz, bool pbcx=true, [[maybe_unused]] bool pbcy=false, [[maybe_unused]] bool pbcz=false)
         : square(Lx, 2, 1, pbcx, false, false)
@@ -361,6 +374,7 @@ struct ladder : square {
 
 
 struct honeycomb : lattice<2,2> {
+    static constexpr const char* alps_name = "honeycomb lattice";  // LATTICE in the ALPS lattice library
     using Base = lattice;
     static size_t const zcmax = 6;
 
@@ -402,6 +416,7 @@ struct honeycomb : lattice<2,2> {
 
 
 struct triangular : lattice<2,1> {
+    static constexpr const char* alps_name = "triangular lattice";  // LATTICE in the ALPS lattice library
     using Base = lattice;
     static size_t const zcmax = 6;
 

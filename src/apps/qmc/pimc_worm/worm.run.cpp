@@ -11,6 +11,7 @@
 
 #include "worm.hpp"
 #include "copyright.hpp"
+#include "alps_input.hpp"
 #include <iostream>
 #include <stdexcept>
 #include <algorithm>
@@ -29,10 +30,16 @@ int main(int argc, char** argv) {
         std::cout << "# " << worm::code_name() << std::endl;
         print_copyright(std::cout);
 
-        // Creates the parameters for the simulation
+        // Creates the parameters for the simulation, also from a pyalps
+        // input file and with ALPS parameter names (alps_input.hpp)
         std::cout << "# Initializing parameters..." << std::endl;
-        alps::parameters_type<worm>::type parameters(argc, argv, "/parameters");
-        
+        pimc_worm_input::command_line cl(argc, argv);
+        alps::parameters_type<worm>::type parameters(cl.argc(), cl.argv(), "/parameters");
+        pimc_worm_input::supply_input_file(parameters, cl.input_file());
+        if (!parameters.is_restored()) {
+            pimc_worm_input::supply_alps_names<LATTICE>(parameters);
+        }
+
         // Define parameters BEFORE parsing
         worm::define_parameters(parameters);
         

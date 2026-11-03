@@ -72,9 +72,14 @@ foreach(lattice IN LISTS PIMC_WORM_LATTICES)
 endforeach()
 alps_install_applications(${_pimc_worm_targets})
 
-# Compares the hand-written lattices with their ALPS lattice library counterparts.
+# Compares the hand-written lattices with their ALPS lattice library
+# counterparts, and checks the input in ALPS conventions (alps_input.hpp).
 if(ALPS_BUILD_TESTING)
   add_executable(pimc_worm_lattice_test test/lattice_test.cpp)
   target_link_libraries(pimc_worm_lattice_test PRIVATE ALPS::alps Eigen3::Eigen)
   alps_add_gtest(pimc_worm_lattice_test COMPONENT pimc_worm)
+
+  add_executable(pimc_worm_input_test test/input_test.cpp)
+  target_link_libraries(pimc_worm_input_test PRIVATE ALPS::alps Eigen3::Eigen)
+  alps_add_gtest(pimc_worm_input_test COMPONENT pimc_worm)
 endif()

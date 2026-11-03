@@ -236,9 +236,14 @@ before the switch:
 
 ## 7. Open questions
 
-- Parameter names for type-dependent couplings (`t_hop0`/`t_hop1`, or ALPS's
-  `t0`/`t1`, `J0`/`J1`)?
-- Keep the old `Lx`/`pbcx` parameters as aliases for existing input files?
+- Parameter names for type-dependent couplings: `alps_input.hpp` already
+  reads ALPS's `t0`, `t1`, ... (`V0`, ...) and accepts them while they are all
+  equal; step 4 can give them their per-type meaning, falling back to `t`.
+- Both name sets are kept: `alps_input.hpp` translates the ALPS names
+  (`T`, `t`, `U`, `L`, ...) to `pimc_worm`'s (`beta`, `t_hop`, `U_on`, `Lx`, ...)
+  before the parameters are defined, so `.ini` files keep working and pyalps
+  input runs too. XXZ has no ALPS names yet: ALPS's `spin` model has `Jxy`,
+  `Jz`, `h` and `local_S`, with `Jpm = -Jxy` and a field sign to check.
 - Format of the disorder file?
 - `ZC` dispatch (A) or a single compile option (B)?
 - Is the single-reference-site `DensDens_CorrFun` intentional for cost, or
