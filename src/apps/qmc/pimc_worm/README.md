@@ -33,6 +33,12 @@ Pollet alone. Changes made for ALPS:
 - `[[maybe_unused]]` on parameters that some lattices or the uniform build
   do not read, so that the code compiles without warnings under
   `-Wall -Wextra`.
+- A detailed-balance fix in `DELETEKINK` (`worm.update.cpp`): its acceptance
+  ratio used the coordination number of the site the worm head leaves, where
+  the reverse `INSERTKINK` picks the bond with 1/(coordination number of the
+  site the head lands on). The two differ only with open boundaries or mixed
+  coordination; there soft-core bosons were biased (5 % in the kinetic
+  energy of an open four-site chain), periodic lattices were not affected.
 
 ## Building
 
