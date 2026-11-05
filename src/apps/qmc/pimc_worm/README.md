@@ -153,8 +153,11 @@ the stiffness of the Bose-Hubbard model both ways.
 hand-written lattices: the same bonds, the same winding increment of every
 hop, neighbor tables that agree from both ends of a bond, and the same
 relative numbering. `test/input_test.cpp` checks the pyalps input and the
-ALPS parameter names. Both are registered with CTest when
-`ALPS_BUILD_TESTING=ON`:
+ALPS parameter names. `test/open_chain_test.cpp` runs a soft-core
+Bose-Hubbard chain with open boundaries for about 20 s and compares its
+energies and particle number with exact diagonalization; sites with fewer
+neighbors are where the `DELETEKINK` fix matters. All three are registered
+with CTest when `ALPS_BUILD_TESTING=ON`:
 
 ```sh
 ctest -R pimc_worm

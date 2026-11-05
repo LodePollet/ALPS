@@ -82,4 +82,11 @@ if(ALPS_BUILD_TESTING)
   add_executable(pimc_worm_input_test test/input_test.cpp)
   target_link_libraries(pimc_worm_input_test PRIVATE ALPS::alps Eigen3::Eigen)
   alps_add_gtest(pimc_worm_input_test COMPONENT pimc_worm)
+
+  # A short run on an open chain against exact diagonalization (about 20 s).
+  if(TARGET pimc_worm_chain_impl)
+    add_executable(pimc_worm_open_chain_test test/open_chain_test.cpp)
+    target_link_libraries(pimc_worm_open_chain_test PRIVATE pimc_worm_chain_impl)
+    alps_add_gtest(pimc_worm_open_chain_test COMPONENT pimc_worm)
+  endif()
 endif()
