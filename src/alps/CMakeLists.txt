@@ -56,7 +56,7 @@ endif()
 set_target_properties(
   alps
   PROPERTIES VERSION ${PROJECT_VERSION}
-             SOVERSION ${PROJECT_VERSION_MAJOR}
+             SOVERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
              INSTALL_RPATH "${ALPS_LOADER_ORIGIN}")
 
 function(alps_dependency_rpath target)
@@ -104,7 +104,7 @@ function(alps_configure_component target component)
   add_library(ALPS::${component} ALIAS ${target})
   set_target_properties(${target} PROPERTIES
     EXPORT_NAME ${component} VERSION ${PROJECT_VERSION}
-    SOVERSION ${PROJECT_VERSION_MAJOR} INSTALL_RPATH "${ALPS_LOADER_ORIGIN}")
+    SOVERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR} INSTALL_RPATH "${ALPS_LOADER_ORIGIN}")
   alps_dependency_rpath(${target} ${ARGN})
   alps_copy_runtime_dependencies(${target})
   string(TOUPPER "${component}" upper)
@@ -172,7 +172,7 @@ endfunction()
 # contribute to libalps until their dependency cycles have been disentangled.
 foreach(module IN ITEMS containers utilities cli numerics ietl solvers xml plotting
                         legacy_parameters expression graph lattice model random
-                        osiris hdf5 numeric_io numeric_xml params alea aleav2 gf accumulators mc scheduler parapack fortran)
+                        osiris hdf5 numeric_io numeric_xml params input alea aleav2 gf accumulators mc scheduler parapack fortran)
   add_subdirectory(${module})
 endforeach()
 target_link_libraries(alps PUBLIC ALPS::utilities ALPS::osiris ALPS::hdf5 ALPS::params
